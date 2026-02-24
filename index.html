@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Polyphonic Chromatic Tuner</title>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <div id="app">
+        <main>
+            <!-- Simple Tuner View -->
+            <section id="simple-view" class="view active">
+                <div class="monitor-title">Monophonic Monitor Tuner View</div>
+                <div id="simple-tuner-container"></div>
+            </section>
+
+            <!-- Poly Tuner View -->
+            <section id="poly-view" class="view">
+                <div class="monitor-title">Modern Chromatic Tuner Interface</div>
+                <div id="poly-tuner-grid" class="poly-grid"></div>
+            </section>
+
+            <!-- Configurations View -->
+            <section id="config-view" class="view">
+                <div class="monitor-title config-title">Tuner Settings</div>
+                <div class="config-content">
+
+                    <div class="settings-group">
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="standard" checked>
+                            <div class="setting-details">
+                                <span class="setting-name">Standard Tuning</span>
+                                <span class="setting-desc">E A D G B E</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="drop_d">
+                            <div class="setting-details">
+                                <span class="setting-name">Drop D</span>
+                                <span class="setting-desc">D A D G B E</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="open_g">
+                            <div class="setting-details">
+                                <span class="setting-name">Open G</span>
+                                <span class="setting-desc">D G D G B D</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="settings-divider">CALIBRATION</div>
+
+                    <div class="calibration-group">
+                        <div class="calibration-header">
+                            <span class="calibration-title">Reference Pitch</span>
+                            <span id="pitch-val" class="calibration-val">440 Hz</span>
+                        </div>
+                        <input type="range" id="pitch-slider" min="430" max="450" value="440" step="1">
+                    </div>
+
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="simple-view">Simple Tuner</button>
+            <button class="nav-item" data-view="poly-view">Poly Tuner</button>
+            <button class="nav-item" data-view="config-view">Configurations</button>
+        </nav>
+
+        <div id="initial-overlay">
+            <button id="start-audio" class="btn-primary">Initialize Engine</button>
+        </div>
+    </div>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>
