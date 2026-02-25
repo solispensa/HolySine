@@ -1,4 +1,5 @@
 import fs from 'fs';
+import JavaScriptObfuscator from 'javascript-obfuscator';
 
 try {
     const html = fs.readFileSync('index.html', 'utf8');
@@ -16,8 +17,23 @@ try {
     const styleTag = `<style>\n${css}\n</style>`;
     let standalone = html.replace('<link rel="stylesheet" href="./style.css" />', styleTag);
 
-    // Inject JS
-    const scriptTag = `<script>\n${audioProc}\n\n${main}\n</script>`;
+    // Combine and Obfuscate JS
+    const rawJS = `${audioProc}\n\n${main}`;
+
+    // Using aggressive defense settings
+    const obfuscatedResult = JavaScriptObfuscator.obfuscate(rawJS, {
+        compact: true,
+        controlFlowFlattening: true,
+        controlFlowFlatteningThreshold: 1,
+        deadCodeInjection: true,
+        deadCodeInjectionThreshold: 0.4,
+        stringArray: true,
+        stringArrayEncoding: ['base64'],
+        stringArrayThreshold: 1,
+        disableConsoleOutput: true
+    });
+
+    const scriptTag = `<script>\n${obfuscatedResult.getObfuscatedCode()}\n</script>`;
     standalone = standalone.replace('<script type="module" src="/main.js"></script>', scriptTag);
 
     fs.writeFileSync('standalone.html', standalone);
