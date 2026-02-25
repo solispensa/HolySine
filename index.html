@@ -10,17 +10,27 @@
 </head>
 
 <body>
+    <!-- Frequency Analyzer Canvas -->
+    <canvas id="analyzer-canvas"></canvas>
+
+    <!-- Analyzer Toggle Button -->
+    <button id="analyzer-toggle-btn" class="toggle-btn">
+        <svg viewBox="0 0 24 24" class="eq-icon">
+            <path d="M4 14v-4m4 8v-12m4 16v-20m4 16v-8m4 12v-16" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" />
+        </svg>
+        <span>Spectrogram</span>
+    </button>
+
     <div id="app">
-        <main>
+        <main style="position: relative; z-index: 2;">
             <!-- Simple Tuner View -->
             <section id="simple-view" class="view active">
-                <div class="monitor-title">Monophonic Monitor Tuner View</div>
                 <div id="simple-tuner-container"></div>
             </section>
 
             <!-- Poly Tuner View -->
             <section id="poly-view" class="view">
-                <div class="monitor-title">Modern Chromatic Tuner Interface</div>
                 <div id="poly-tuner-grid" class="poly-grid"></div>
             </section>
 
@@ -77,6 +87,98 @@
                                 <div class="empty-circle"></div>
                             </div>
                         </label>
+
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="eb_standard">
+                            <div class="setting-details">
+                                <span class="setting-name">Eb Standard</span>
+                                <span class="setting-desc">Eb Ab Db Gb Bb Eb</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="open_esus2">
+                            <div class="setting-details">
+                                <span class="setting-name">Open Esus2</span>
+                                <span class="setting-desc">E B E F# B E</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="dadgad">
+                            <div class="setting-details">
+                                <span class="setting-name">DADGAD</span>
+                                <span class="setting-desc">D A D G A D</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="rain_song">
+                            <div class="setting-details">
+                                <span class="setting-name">Rain Song</span>
+                                <span class="setting-desc">D G C G C D</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+
+                        <label class="setting-option">
+                            <input type="radio" name="tuning" value="custom">
+                            <div class="setting-details">
+                                <span class="setting-name">Custom</span>
+                                <span class="setting-desc">Enter notes manually</span>
+                            </div>
+                            <div class="radio-indicator">
+                                <svg viewBox="0 0 24 24" class="check-icon">
+                                    <circle cx="12" cy="12" r="10" fill="#00ff88" />
+                                    <path d="M7 13l3 3 7-7" stroke="#101015" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                                <div class="empty-circle"></div>
+                            </div>
+                        </label>
+
+                        <div id="custom-tuning-input"
+                            style="display: none; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                            <label
+                                style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Scientific
+                                Pitch Notation (comma separated):</label>
+                            <input type="text" id="custom-tuning-text" value="E4, B3, G3, D3, A2, E2"
+                                style="background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: #fff; padding: 0.5rem; font-family: monospace; outline: none;">
+                            <button id="apply-custom-tuning"
+                                style="background: #00ff88; color: #000; border: none; padding: 0.5rem; border-radius: 4px; font-weight: bold; cursor: pointer;">Apply
+                                Tuning</button>
+                        </div>
                     </div>
 
                     <div class="settings-divider">CALIBRATION</div>

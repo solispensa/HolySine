@@ -90,16 +90,26 @@ main {
 .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 1rem;
     position: relative;
     z-index: 2;
+}
+
+#simple-view .card-header {
+    flex-direction: column;
+    justify-content: center;
 }
 
 .string-info {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+#simple-view .string-info {
+    font-size: 2.2rem;
+    text-align: center;
 }
 
 .measurement-info {
@@ -137,12 +147,12 @@ main {
     display: flex;
     gap: 1rem;
     background: linear-gradient(to right,
-            rgba(255, 68, 102, 0.05) 0%,
-            rgba(255, 170, 0, 0.05) 45%,
-            rgba(0, 255, 136, 0.3) 49.5%,
-            rgba(0, 255, 136, 0.3) 50.5%,
-            rgba(255, 170, 0, 0.05) 55%,
-            rgba(255, 68, 102, 0.05) 100%);
+            transparent 0%,
+            transparent 49.5%,
+            rgba(0, 255, 136, 0.4) 49.5%,
+            rgba(0, 255, 136, 0.4) 50.5%,
+            transparent 50.5%,
+            transparent 100%);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.03);
     padding-top: 1.5rem;
@@ -610,4 +620,60 @@ input[type=range]::-webkit-slider-runnable-track {
     cursor: pointer;
     background: transparent;
     border-radius: 3px;
+}
+
+/* Analyzer Overlay */
+#analyzer-canvas {
+    position: fixed;
+    bottom: 0px;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* Adjust height to not cover top elements if needed, but opacity helps */
+    z-index: 1;
+    /* Behind main z-index 2 */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+#analyzer-canvas.active {
+    opacity: 0.6;
+    /* Stronger background glow effect */
+}
+
+/* Toggle Button */
+.toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn.active {
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--accent-primary);
+    border-color: rgba(0, 242, 255, 0.3);
+}
+
+.eq-icon {
+    width: 16px;
+    height: 16px;
 }

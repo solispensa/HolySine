@@ -143,9 +143,10 @@ export class AudioProcessor {
         const detected = [];
 
         guitarTargets.forEach(target => {
+            const targetFrequency = target.targetFreq || target.freq;
             // Search window (+/- 1.5 semitones to avoid overlap/harmonic interference)
-            const lowFreq = target.freq * Math.pow(2, -1.5 / 12);
-            const highFreq = target.freq * Math.pow(2, 1.5 / 12);
+            const lowFreq = targetFrequency * Math.pow(2, -1.5 / 12);
+            const highFreq = targetFrequency * Math.pow(2, 1.5 / 12);
 
             let maxMag = -Infinity;
             let bestBin = -1;
@@ -177,7 +178,7 @@ export class AudioProcessor {
                 }
 
                 const note = AudioProcessor.getNoteFromFrequency(refinedFreq);
-                detected.push({ ...note, magnitude: maxMag, targetFreq: target.freq });
+                detected.push({ ...note, magnitude: maxMag, targetFreq: targetFrequency });
             }
         });
 
@@ -221,5 +222,12 @@ export class AudioProcessor {
         }
 
         return null;
+    }
+
+    // Expose byte frequency data for visualizer
+    getByteFrequencyData(array) {
+        if (this.analyser && this.isInitialized) {
+            this.analyser.getByteFrequencyData(array);
+        }
     }
 }
