@@ -677,3 +677,22 @@ input[type=range]::-webkit-slider-runnable-track {
     width: 16px;
     height: 16px;
 }
+
+/* Ad Banner Styling */
+#ad-banner-placement {
+    position: fixed;
+    bottom: 60px;
+    /* Above the bottom-nav */
+    left: 0;
+    width: 100%;
+    z-index: 95;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+    pointer-events: auto;
+}
+
+#ad-banner-placement>div {
+    max-width: 100%;
+    overflow: hidden;
+}
