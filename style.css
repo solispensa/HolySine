@@ -44,7 +44,8 @@ body {
 main {
     flex: 1;
     padding: 2rem;
-    padding-bottom: 5rem;
+    padding-bottom: 320px;
+    /* Room for ad banner + nav */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -680,16 +681,13 @@ input[type=range]::-webkit-slider-runnable-track {
 
 /* Ad Banner Styling */
 #ad-banner-placement {
-    position: fixed;
-    bottom: 60px;
-    /* Above the bottom-nav */
-    left: 0;
     width: 100%;
-    z-index: 95;
     display: flex;
     justify-content: center;
     background: transparent;
-    pointer-events: auto;
+    margin-top: 2rem;
+    margin-bottom: 80px;
+    /* Room for bottom-nav */
 }
 
 #ad-banner-placement>div {
