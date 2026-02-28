@@ -188,12 +188,69 @@
 
                     <div class="calibration-group">
                         <div class="calibration-header">
-                            <span class="calibration-title">Reference Pitch</span>
-                            <span id="pitch-val" class="calibration-val">440 Hz</span>
+                            <span class="calibration-title">Reference Pitch (A4)</span>
+                            <span id="ref-pitch-val" class="calibration-val">440Hz</span>
                         </div>
-                        <input type="range" id="pitch-slider" min="430" max="450" value="440" step="1">
+                        <input type="range" id="ref-pitch-slider" min="430" max="450" step="1" value="440">
                     </div>
 
+                    <div class="settings-divider">Detection Settings</div>
+                    <div class="calibration-group">
+                        <div class="calibration-header">
+                            <span class="calibration-title">Detection Sustain</span>
+                        </div>
+                        <div class="monitor-controls">
+                            <div class="control-row">
+                                <label>Compressor Intensity</label>
+                                <input type="range" id="monitor-sustain" min="0" max="1" step="0.01" value="0.25">
+                                <p class="settings-hint">Increases volume of decaying notes to improve chord detection
+                                    accuracy.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-divider">Input Monitor</div>
+                    <div class="calibration-group">
+                        <div class="calibration-header">
+                            <span class="calibration-title">Live Monitoring</span>
+                            <label class="switch">
+                                <input type="checkbox" id="monitor-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="monitor-controls">
+                            <div class="control-row">
+                                <label>Monitor Level</label>
+                                <input type="range" id="monitor-volume" min="0" max="1" step="0.01" value="0">
+                            </div>
+                            <div class="control-row">
+                                <label>Bass</label>
+                                <input type="range" id="monitor-bass" min="-12" max="12" step="1" value="0">
+                            </div>
+                            <div class="control-row">
+                                <label>Treble</label>
+                                <input type="range" id="monitor-treble" min="-12" max="12" step="1" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chord Tracker View -->
+            <section id="chord-view" class="view">
+                <div class="chord-container">
+                    <div id="chord-display">
+                        <span class="chord-name-label">DETECTED CHORD</span>
+                        <h2 id="chord-name">---</h2>
+                        <div id="chord-listening-notes" class="chord-listening-notes"></div>
+                        <div id="chord-notes" class="chord-notes-list"></div>
+                    </div>
+                    <div id="chord-graphs" class="chord-graphs-container">
+                        <!-- Graphs will be injected here by JS -->
+                    </div>
+                    <div class="voicing-visualizer">
+                        <div id="voicing-grid"></div>
+                    </div>
                 </div>
             </section>
 
@@ -209,6 +266,7 @@
         <nav class="bottom-nav">
             <button class="nav-item active" data-view="simple-view">Simple Tuner</button>
             <button class="nav-item" data-view="poly-view">Poly Tuner</button>
+            <button class="nav-item" data-view="chord-view">Chord Tracker</button>
             <button class="nav-item" data-view="config-view">Configurations</button>
         </nav>
 

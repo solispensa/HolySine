@@ -6,14 +6,25 @@ export class AudioProcessor {
         this.dataArray = null;
         this.isInitialized = false;
         this.onUpdate = null;
+
+        // Monitor nodes
+        this.baseNode = null;
+        this.bassNode = null;
+        this.trebleNode = null;
+        this.monitorNode = null;
     }
 
     async initialize() {
         if (this.isInitialized) return;
 
         try {
-            // Disable browser audio processing for raw signal
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Initialize AudioContext with low-latency hint
+            const contextOptions = {
+                latencyHint: 'interactive',
+                // On some systems, setting the sampleRate to the device's default 
+                // can bypass internal resamplers and reduce latency
+            };
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)(contextOptions);
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: false,
@@ -23,11 +34,43 @@ export class AudioProcessor {
             });
 
             this.microphone = this.audioContext.createMediaStreamSource(stream);
+
+            // Initialize Compressor (Sustain)
+            this.compressor = this.audioContext.createDynamicsCompressor();
+            this.compressor.threshold.setValueAtTime(-30, this.audioContext.currentTime);
+            this.compressor.knee.setValueAtTime(40, this.audioContext.currentTime);
+            this.compressor.ratio.setValueAtTime(12, this.audioContext.currentTime);
+            this.compressor.attack.setValueAtTime(0, this.audioContext.currentTime);
+            this.compressor.release.setValueAtTime(0.25, this.audioContext.currentTime);
+
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = 8192; // High resolution required for Poly Tuner separation
 
-            this.microphone.connect(this.analyser);
+            // Mic -> Compressor -> Analyser
+            this.microphone.connect(this.compressor);
+            this.compressor.connect(this.analyser);
+
             this.dataArray = new Float32Array(this.analyser.fftSize);
+
+            // Initialize Monitor Chain
+            this.bassNode = this.audioContext.createBiquadFilter();
+            this.bassNode.type = 'lowshelf';
+            this.bassNode.frequency.value = 200;
+            this.bassNode.gain.value = 0;
+
+            this.trebleNode = this.audioContext.createBiquadFilter();
+            this.trebleNode.type = 'highshelf';
+            this.trebleNode.frequency.value = 2000;
+            this.trebleNode.gain.value = 0;
+
+            this.monitorNode = this.audioContext.createGain();
+            this.monitorNode.gain.value = 0; // Off by default
+
+            // Connect monitor chain: Mic -> Bass -> Treble -> Gain -> Destination (Raw Signal)
+            this.microphone.connect(this.bassNode);
+            this.bassNode.connect(this.trebleNode);
+            this.trebleNode.connect(this.monitorNode);
+            this.monitorNode.connect(this.audioContext.destination);
 
             this.isInitialized = true;
             this.startProcessing();
@@ -61,19 +104,21 @@ export class AudioProcessor {
         // Signal too weak or silence
         if (rms < 0.002) return -1;
 
-        // Perform Square Difference Function within musical frequency range (40Hz to 1200Hz)
-        const minLag = Math.floor(sampleRate / 1200);
-        const maxLag = Math.floor(sampleRate / 40);
+        // Perform Square Difference Function within guitar frequency range (70Hz to 1100Hz)
+        const minLag = Math.floor(sampleRate / 1100);
+        const maxLag = Math.floor(sampleRate / 70);
 
-        // We use a half-size window to ensure we have enough data for the lag
-        const windowSize = Math.floor(SIZE / 2);
+        // We use a optimized window size to balance speed and accuracy
+        const windowSize = Math.floor(SIZE * 0.4);
         const diff = new Float32Array(maxLag + 1);
 
         for (let lag = minLag; lag <= maxLag; lag++) {
+            let sum = 0;
             for (let i = 0; i < windowSize; i++) {
                 const delta = buffer[i] - buffer[i + lag];
-                diff[lag] += delta * delta;
+                sum += delta * delta;
             }
+            diff[lag] = sum;
         }
 
         // Find the first significant "valley" to avoid octave errors
@@ -229,5 +274,107 @@ export class AudioProcessor {
         if (this.analyser && this.isInitialized) {
             this.analyser.getByteFrequencyData(array);
         }
+    }
+
+    setMonitorGain(value) {
+        if (this.monitorNode) this.monitorNode.gain.setTargetAtTime(value, this.audioContext.currentTime, 0.1);
+    }
+
+    setBassGain(value) {
+        if (this.bassNode) this.bassNode.gain.setTargetAtTime(value, this.audioContext.currentTime, 0.1);
+    }
+
+    setTrebleGain(value) {
+        if (this.trebleNode) this.trebleNode.gain.setTargetAtTime(value, this.audioContext.currentTime, 0.1);
+    }
+
+    setSustain(value) {
+        if (!this.compressor) return;
+        // value 0 -> threshold -20, ratio 4
+        // value 1 -> threshold -60, ratio 20
+        const threshold = -20 - (value * 40);
+        const ratio = 4 + (value * 16);
+        this.compressor.threshold.setTargetAtTime(threshold, this.audioContext.currentTime, 0.1);
+        this.compressor.ratio.setTargetAtTime(ratio, this.audioContext.currentTime, 0.1);
+    }
+
+    // Polyphonic peak detection for chord identification
+    getFrequencyPeaks() {
+        if (!this.dataArray || !this.isInitialized) return [];
+
+        const binCount = this.analyser.frequencyBinCount;
+        const sampleRate = this.audioContext.sampleRate;
+        const fftSize = this.analyser.fftSize;
+        const freqData = new Float32Array(binCount);
+        this.analyser.getFloatFrequencyData(freqData);
+
+        const peaks = [];
+        const threshold = -85; // Lower boundary Sensitivity threshold in dB
+
+        // Search for peaks between 50Hz and 1200Hz
+        const minBin = Math.floor(50 * fftSize / sampleRate);
+        const maxBin = Math.floor(1200 * fftSize / sampleRate);
+
+        for (let i = minBin; i < maxBin; i++) {
+            if (freqData[i] > threshold && freqData[i] > freqData[i - 1] && freqData[i] > freqData[i + 1]) {
+                // Local dominance check
+                let isLocalMax = true;
+                const windowSize = 20;
+                for (let j = Math.max(minBin, i - windowSize); j <= Math.min(maxBin, i + windowSize); j++) {
+                    if (freqData[j] > freqData[i]) {
+                        isLocalMax = false;
+                        break;
+                    }
+                }
+
+                if (isLocalMax) {
+                    const y1 = freqData[i - 1];
+                    const y2 = freqData[i];
+                    const y3 = freqData[i + 1];
+                    const p = 0.5 * (y1 - y3) / (y1 - 2 * y2 + y3);
+                    const refinedFreq = (i + p) * sampleRate / fftSize;
+
+                    const note = AudioProcessor.getNoteFromFrequency(refinedFreq);
+                    if (note && !peaks.some(p => p.name === note.name && p.octave === note.octave)) {
+                        peaks.push({ ...note, magnitude: freqData[i] });
+                    }
+                }
+            }
+        }
+
+        // Return top 8 candidates before harmonic filtering
+        let candidates = peaks.sort((a, b) => b.magnitude - a.magnitude).slice(0, 10);
+        const filtered = [];
+
+        // Simple Harmonic Filtering
+        // If a peak is a multiple of a strong lower peak (fundamental), we check if it's truly a new note
+        for (let i = 0; i < candidates.length; i++) {
+            const current = candidates[i];
+            let isUnique = true;
+
+            for (let j = 0; j < filtered.length; j++) {
+                const prev = filtered[j];
+                // Check if current is a harmonic of prev (roughly 2x, 3x, 4x...)
+                // We use a small tolerance for frequency ratio
+                const ratio = current.frequency / prev.frequency;
+                const roundedRatio = Math.round(ratio);
+
+                // If it's a harmonic (2.0, 3.0, etc.) and much weaker than the fundamental
+                if (roundedRatio > 1 && Math.abs(ratio - roundedRatio) < 0.03) {
+                    // It's a harmonic. If it's significantly lower in magnitude, it's likely just an overtone.
+                    if (current.magnitude < prev.magnitude - 10) {
+                        isUnique = false;
+                        break;
+                    }
+                }
+            }
+
+            if (isUnique) {
+                filtered.push(current);
+            }
+        }
+
+        // Return top 6 filtered peaks
+        return filtered.sort((a, b) => b.magnitude - a.magnitude).slice(0, 6);
     }
 }

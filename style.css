@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
 
 :root {
     --bg-color: #050508;
@@ -43,9 +43,9 @@ body {
 
 main {
     flex: 1;
-    padding: 2rem;
-    padding-bottom: 320px;
-    /* Room for ad banner + nav */
+    padding: 1.5rem 1rem;
+    padding-bottom: 70px;
+    /* Reduced padding to let ads tuck behind nav */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -74,18 +74,21 @@ main {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border-color);
+    border: 5px solid rgba(255, 255, 255, 0.05);
+    /* Constant width to prevent shifts */
     border-radius: 20px;
-    padding: 1.5rem;
+    padding: 1.2rem;
+    /* Adjusted from 1.5rem to account for thicker border */
     position: relative;
     overflow: hidden;
     margin-bottom: 1rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .tuning-card.in-tune {
-    border-color: rgba(0, 255, 136, 0.3);
+    border-color: rgba(0, 255, 136, 0.8);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.3), 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 .card-header {
@@ -104,12 +107,13 @@ main {
 
 .string-info {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 800;
+    /* Bolder note names */
     color: var(--text-primary);
 }
 
 #simple-view .string-info {
-    font-size: 2.2rem;
+    font-size: 4.5rem;
     text-align: center;
 }
 
@@ -119,7 +123,8 @@ main {
 
 .cents-display {
     font-size: 2.2rem;
-    font-weight: 700;
+    font-weight: 900;
+    /* Ultra bold for focus */
     display: block;
     line-height: 1;
 }
@@ -314,7 +319,7 @@ main {
 
 /* Compact styles for Poly Tuner cards to fit on screen */
 #poly-view {
-    height: calc(100vh - 220px);
+    height: calc(100vh - 100px);
     max-height: 800px;
     flex-direction: column;
 }
@@ -411,6 +416,23 @@ main {
 #poly-view .scale-markers span:not(:nth-child(5)) {
     display: none;
     /* Only show the '0' marker in Poly view to save horizontal space */
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    border-radius: 50px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 20px -5px rgba(0, 242, 255, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-primary:hover {
@@ -584,6 +606,87 @@ main {
     margin-bottom: 1.5rem;
 }
 
+.monitor-controls {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.control-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.settings-hint {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    margin-top: -0.4rem;
+    line-height: 1.4;
+}
+
+.control-row label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Switch Styling */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: #00ff88;
+}
+
+input:checked+.slider:before {
+    transform: translateX(24px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
 .calibration-title {
     font-weight: 500;
 }
@@ -598,6 +701,7 @@ main {
 /* Custom Range Slider */
 input[type=range] {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 6px;
     border-radius: 3px;
@@ -631,8 +735,8 @@ input[type=range]::-webkit-slider-runnable-track {
     width: 100vw;
     height: 100vh;
     /* Adjust height to not cover top elements if needed, but opacity helps */
-    z-index: 1;
-    /* Behind main z-index 2 */
+    z-index: 5;
+    /* Above ads but below high-level UI if any */
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.5s ease;
@@ -685,12 +789,158 @@ input[type=range]::-webkit-slider-runnable-track {
     display: flex;
     justify-content: center;
     background: transparent;
-    margin-top: 2rem;
-    margin-bottom: 80px;
-    /* Room for bottom-nav */
+    margin-top: auto;
+    /* Push to the very bottom */
+    margin-bottom: 0px;
+    z-index: 1;
+    opacity: 0.8;
+    /* Slight fade if it peeks out */
 }
 
 #ad-banner-placement>div {
     max-width: 100%;
     overflow: hidden;
+}
+
+/* Chord Tracker Styles */
+.chord-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.5rem 2rem;
+    min-height: 60vh;
+}
+
+#chord-display {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    padding: 1.5rem 2rem;
+    width: 100%;
+    max-width: 600px;
+    backdrop-filter: blur(20px);
+}
+
+.chord-name-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    letter-spacing: 4px;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+#chord-name {
+    font-size: 5rem;
+    font-weight: 900;
+    /* Ultra bold for chord name */
+    margin: 0;
+    background: linear-gradient(135deg, #00ff88 0%, #00f2ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+}
+
+.chord-listening-notes {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    color: var(--accent-primary);
+    font-weight: 700;
+    /* Bolder listening notes */
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.1rem;
+}
+
+.chord-notes-list {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.chord-note-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1.2rem;
+    border-radius: 20px;
+    font-weight: 800;
+    /* Bolder note pills */
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.voicing-visualizer {
+    width: 100%;
+    max-width: 800px;
+}
+
+#voicing-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 10px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.01);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.voicing-note {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 800;
+    /* Bolder grid notes */
+    transition: all 0.3s ease;
+}
+
+.voicing-note.active {
+    background: #00ff88;
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+    transform: scale(1.1);
+}
+
+@media (max-width: 640px) {
+    #chord-name {
+        font-size: 3.5rem;
+    }
+}
+
+.chord-graphs-container {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 800px;
+    height: 200px;
+    justify-content: center;
+}
+
+.chord-graphs-container .tuning-card {
+    flex: 1;
+    padding: 0.2rem;
+    margin: 0;
+    height: 100%;
+    border-radius: 10px;
+}
+
+.chord-graphs-container .card-header,
+.chord-graphs-container .scale-markers {
+    display: none;
+}
+
+.chord-graphs-container .scale-container {
+    height: 100%;
+    margin: 0;
 }

@@ -1,5 +1,6 @@
 import './style.css';
 import { AudioProcessor } from './audioProcessor.js';
+import { identifyChord } from './chordLogic.js';
 
 const processor = new AudioProcessor();
 const startBtn = document.getElementById('start-audio');
@@ -176,6 +177,30 @@ document.querySelectorAll('input[name="tuning"]').forEach(radio => {
 const pitchSlider = document.getElementById('pitch-slider');
 const pitchVal = document.getElementById('pitch-val');
 
+const configView = document.getElementById('config-view');
+const refPitchSlider = document.getElementById('ref-pitch-slider');
+const refPitchVal = document.getElementById('ref-pitch-val');
+
+// Monitor Controls
+const monitorToggle = document.getElementById('monitor-toggle');
+const monitorVolume = document.getElementById('monitor-volume');
+const monitorBass = document.getElementById('monitor-bass');
+const monitorTreble = document.getElementById('monitor-treble');
+const monitorSustain = document.getElementById('monitor-sustain');
+
+let chordCards = [];
+
+function initChordGraphs() {
+    const container = document.getElementById('chord-graphs');
+    if (!container) return;
+    container.innerHTML = '';
+    chordCards = [];
+    for (let i = 0; i < 6; i++) {
+        const card = new TuningCard(container, { id: 'Peak', note: i + 1 });
+        chordCards.push(card);
+    }
+}
+
 function updateSliderBackground() {
     if (!pitchSlider) return;
     const val = (pitchSlider.value - pitchSlider.min) / (pitchSlider.max - pitchSlider.min) * 100;
@@ -306,7 +331,7 @@ class TuningCard {
 
         const step = h / (this.history.length - 1);
         this.ctx.beginPath();
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 6;
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
@@ -341,8 +366,6 @@ class TuningCard {
 
                 this.ctx.lineTo(x, y);
                 this.ctx.strokeStyle = strokeColor;
-                this.ctx.shadowBlur = errorRatio < 0.2 ? 10 : 0;
-                this.ctx.shadowColor = 'rgba(0, 255, 136, 0.5)';
                 this.ctx.stroke();
 
                 // Start next segment
@@ -410,19 +433,139 @@ startBtn.addEventListener('click', async () => {
     }
 });
 
+// Monitor Listeners
+if (monitorToggle) {
+    monitorToggle.addEventListener('change', (e) => {
+        const gain = e.target.checked ? parseFloat(monitorVolume.value) : 0;
+        processor.setMonitorGain(gain);
+    });
+}
+
+if (monitorVolume) {
+    monitorVolume.addEventListener('input', (e) => {
+        if (monitorToggle.checked) {
+            processor.setMonitorGain(parseFloat(e.target.value));
+        }
+    });
+}
+
+if (monitorBass) {
+    monitorBass.addEventListener('input', (e) => {
+        processor.setBassGain(parseFloat(e.target.value));
+    });
+}
+
+if (monitorTreble) {
+    monitorTreble.addEventListener('input', (e) => {
+        processor.setTrebleGain(parseFloat(e.target.value));
+    });
+}
+
+if (monitorSustain) {
+    monitorSustain.addEventListener('input', (e) => {
+        processor.setSustain(parseFloat(e.target.value));
+    });
+    // Set initial sustain
+    processor.setSustain(parseFloat(monitorSustain.value));
+}
+
+if (refPitchSlider) {
+    refPitchSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        refPitchVal.textContent = `${val}Hz`;
+        AudioProcessor.referencePitch = val;
+    });
+}
+
+let lastStableChord = null;
+let chordDisplayTimeout = null;
+
+function updateChordUI(chord, peaks) {
+    const chordNameElem = document.getElementById('chord-name');
+    const chordNotesElem = document.getElementById('chord-notes');
+    const listeningNotesElem = document.getElementById('chord-listening-notes');
+    const voicingGrid = document.getElementById('voicing-grid');
+
+    // Update the literal notes "listening" list (e.g. E B E G# B G#)
+    if (listeningNotesElem) {
+        const currentNotes = peaks.map(p => `${p.name}${p.octave}`);
+        listeningNotesElem.textContent = currentNotes.length > 0 ? currentNotes.join('  ') : '';
+    }
+
+    if (chord) {
+        lastStableChord = chord;
+        if (chordDisplayTimeout) clearTimeout(chordDisplayTimeout);
+
+        chordNameElem.textContent = chord.fullName;
+        chordNameElem.style.opacity = '1';
+        chordNameElem.style.filter = 'none';
+    } else {
+        // If detection is lost, keep the last chord for a brief moment to avoid flashing
+        if (lastStableChord) {
+            chordNameElem.textContent = lastStableChord.fullName;
+            chordNameElem.style.opacity = '0.5';
+            chordNameElem.style.filter = 'blur(1px)';
+
+            if (!chordDisplayTimeout) {
+                chordDisplayTimeout = setTimeout(() => {
+                    lastStableChord = null;
+                    chordDisplayTimeout = null;
+                }, 1500); // Hold for 1.5 seconds
+            }
+        } else {
+            chordNameElem.textContent = peaks.length > 0 ? 'Detecting...' : '---';
+            chordNameElem.style.opacity = peaks.length > 0 ? '0.6' : '0.3';
+            chordNameElem.style.filter = 'none';
+        }
+    }
+
+    // Update note pills (unique semitones)
+    chordNotesElem.innerHTML = '';
+    const uniqueNotes = [...new Set(peaks.map(p => p.name))];
+    uniqueNotes.forEach(note => {
+        const pill = document.createElement('div');
+        pill.className = 'chord-note-pill';
+        pill.textContent = note;
+        chordNotesElem.appendChild(pill);
+    });
+
+    // Update voicing grid
+    if (voicingGrid.children.length === 0) {
+        const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        NOTES.forEach(note => {
+            const cell = document.createElement('div');
+            cell.className = 'voicing-note';
+            cell.textContent = note;
+            cell.setAttribute('data-note', note);
+            voicingGrid.appendChild(cell);
+        });
+    }
+
+    const cells = voicingGrid.querySelectorAll('.voicing-note');
+    cells.forEach(cell => {
+        const note = cell.getAttribute('data-note');
+        if (uniqueNotes.includes(note)) {
+            cell.classList.add('active');
+        } else {
+            cell.classList.remove('active');
+        }
+    });
+}
+
 function animate() {
     // Ensure context is running (browsers may suspend it)
     if (processor.audioContext && processor.audioContext.state === 'suspended') {
         processor.audioContext.resume();
     }
 
-    const simpleView = document.getElementById('simple-view');
+    const activeView = document.querySelector('.view.active');
+    const targetViewId = activeView ? activeView.id : null;
 
-    if (simpleView && simpleView.classList.contains('active')) {
+    if (targetViewId === 'simple-view') {
         // Only run Monophonic processing
         const monoNote = processor.getMonoNote() || { cents: 0, frequency: 0, isDetected: false };
         if (simpleCard) simpleCard.update({ ...monoNote, isDetected: !!monoNote.name });
-    } else if (polyCards.length > 0) {
+    } else if (targetViewId === 'poly-view') {
         // Only run Polyphonic processing passing dynamic array
         const detected = processor.getPolyNotes(GUITAR_STRINGS);
         // Update all 6 strings in poly view
@@ -444,61 +587,88 @@ function animate() {
                 card.update({ cents: 0, frequency: stringInfo.targetFreq, isDetected: false });
             }
         });
+    } else if (targetViewId === 'chord-view') {
+        const peaks = processor.getFrequencyPeaks();
+        const chord = identifyChord(peaks);
+        updateChordUI(chord, peaks);
+
+        if (chordCards.length === 0) initChordGraphs();
+
+        // Update chord graphs with peak data
+        chordCards.forEach((card, i) => {
+            const peak = peaks[i];
+            if (peak) {
+                card.update({ ...peak, isDetected: true });
+            } else {
+                card.update({ cents: 0, frequency: 0, isDetected: false });
+            }
+        });
     }
 
     // Draw Frequency Analyzer if enabled
     if (analyzerEnabled && analyzerCtx) {
-        const w = analyzerCanvas.width;
-        const h = analyzerCanvas.height;
-        const binCount = processor.analyser.frequencyBinCount;
-        const byteData = new Uint8Array(binCount);
-        processor.getByteFrequencyData(byteData);
+        if (targetViewId === 'config-view') {
+            analyzerCanvas.classList.remove('active');
+            analyzerCtx.clearRect(0, 0, analyzerCanvas.width, analyzerCanvas.height);
+        } else {
+            analyzerCanvas.classList.add('active');
+            const w = analyzerCanvas.width;
+            const h = analyzerCanvas.height;
+            const binCount = processor.analyser.frequencyBinCount;
+            const sampleRate = processor.audioContext.sampleRate;
+            const fftSize = processor.analyser.fftSize;
 
-        analyzerCtx.clearRect(0, 0, w, h);
+            const byteData = new Uint8Array(binCount);
+            processor.getByteFrequencyData(byteData);
 
-        // Draw a smooth wave at the bottom, centered horizontally
-        // Display first 1024 bins which covers up to ~2.7kHz at 44.1kHz (perfect for guitar)
-        const displayBins = Math.min(1024, binCount);
+            analyzerCtx.clearRect(0, 0, w, h);
 
-        // We will draw from the center outwards symmetrically
-        const center = w / 2;
-        const step = center / displayBins;
+            // Focus on ~80Hz to ~1200Hz (Guitar Range)
+            const minBin = Math.floor(80 * fftSize / sampleRate);
+            const maxBin = Math.floor(1200 * fftSize / sampleRate);
+            const range = maxBin - minBin;
 
-        analyzerCtx.beginPath();
-        analyzerCtx.moveTo(w, h); // Start at bottom right
-        analyzerCtx.lineTo(0, h); // Line to bottom left
+            const center = w / 2;
+            const step = center / range;
 
-        // Left side (mirrored)
-        for (let i = displayBins - 1; i >= 0; i--) {
-            const value = byteData[i];
-            const percent = value / 255;
-            const height = percent * h * 0.4; // Max height is 40% of screen
-            const x = center - (i * step);
-            analyzerCtx.lineTo(x, h - height);
+            analyzerCtx.beginPath();
+            analyzerCtx.moveTo(w, h);
+            analyzerCtx.lineTo(0, h);
+
+            // Left side (mirrored)
+            for (let i = range - 1; i >= 0; i--) {
+                const value = byteData[minBin + i];
+                const percent = value / 255;
+                const height = percent * h * 0.5; // Max height is 50% of screen
+                const x = center - (i * step);
+                analyzerCtx.lineTo(x, h - height);
+            }
+
+            // Right side (normal)
+            for (let i = 0; i < range; i++) {
+                const value = byteData[minBin + i];
+                const percent = value / 255;
+                const height = percent * h * 0.5;
+                const x = center + (i * step);
+                analyzerCtx.lineTo(x, h - height);
+            }
+
+            analyzerCtx.lineTo(w, h);
+            analyzerCtx.closePath();
+
+            const gradient = analyzerCtx.createLinearGradient(0, h, 0, h * 0.5);
+            gradient.addColorStop(0, 'rgba(0, 242, 255, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 242, 255, 0.0)');
+
+            analyzerCtx.fillStyle = gradient;
+            analyzerCtx.fill();
+
+            analyzerCtx.lineWidth = 3;
+            analyzerCtx.strokeStyle = 'rgba(0, 242, 255, 0.6)';
+            analyzerCtx.stroke();
         }
-
-        // Right side (normal)
-        for (let i = 0; i < displayBins; i++) {
-            const value = byteData[i];
-            const percent = value / 255;
-            const height = percent * h * 0.4;
-            const x = center + (i * step);
-            analyzerCtx.lineTo(x, h - height);
-        }
-
-        analyzerCtx.lineTo(w, h);
-        analyzerCtx.closePath();
-
-        const gradient = analyzerCtx.createLinearGradient(0, h, 0, h * 0.6);
-        gradient.addColorStop(0, 'rgba(0, 255, 136, 0.5)');
-        gradient.addColorStop(1, 'rgba(0, 255, 136, 0.0)');
-
-        analyzerCtx.fillStyle = gradient;
-        analyzerCtx.fill();
-
-        analyzerCtx.lineWidth = 2;
-        analyzerCtx.strokeStyle = 'rgba(0, 255, 136, 0.8)';
-        analyzerCtx.stroke();
+    } else {
+        analyzerCanvas.classList.remove('active');
     }
 
     requestAnimationFrame(animate);

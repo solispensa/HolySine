@@ -34,7 +34,7 @@ try {
     });
 
     const scriptTag = `<script>\n${obfuscatedResult.getObfuscatedCode()}\n</script>`;
-    standalone = standalone.replace('<script type="module" src="/main.js"></script>', scriptTag);
+    standalone = standalone.replace(/<script type="module" src=".*main\.js"><\/script>/, scriptTag);
 
     fs.writeFileSync('standalone.html', standalone);
     console.log('Successfully created standalone.html');
